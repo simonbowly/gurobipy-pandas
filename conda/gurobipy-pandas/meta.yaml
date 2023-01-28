@@ -1,0 +1,39 @@
+{% set version = "1.0.0" %}
+
+package:
+  name: gurobipy-pandas
+  version: {{ version }}
+
+source:
+  url: https://pypi.io/packages/source/g/gurobipy-pandas/gurobipy_pandas-{{ version }}.tar.gz
+  sha256: 47d370c116995781e5bd3a606c9aa9fdf07d9991475d582c496f0acc2df62ac2
+
+build:
+  noarch: python
+  number: 1
+  script: {{ PYTHON }} -m pip install --no-deps . -vv
+
+requirements:
+  host:
+    - python
+    - hatchling
+    - pip
+    - pandas
+    - gurobi
+  run:
+    - python
+    - pandas
+    - gurobi
+
+test:
+  imports:
+    - gurobipy_pandas
+
+about:
+  home: https://github.com/Gurobi/gurobipy-pandas
+  license: Apache-2.0
+  summary: 'Convenience wrapper for building optimization models from pandas data'
+  description: |
+    gurobipy-pandas is a convenient (optional) wrapper to connect pandas with gurobipy
+  dev_url: https://github.com/Gurobi/gurobipy-pandas
+  doc_url: https://gurobi-optimization-gurobipy-pandas.readthedocs-hosted.com/en/latest/
