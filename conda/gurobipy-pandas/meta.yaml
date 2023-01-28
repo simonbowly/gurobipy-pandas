@@ -10,16 +10,13 @@ source:
 
 build:
   noarch: python
-  number: 1
-  script: {{ PYTHON }} -m pip install --no-deps . -vv
+  number: 3
+  script: python -m pip install --no-deps . -vv
 
 requirements:
-  host:
-    - python
-    - hatchling
+  build:
     - pip
-    - pandas
-    - gurobi
+    - hatchling
   run:
     - python
     - pandas
@@ -31,7 +28,7 @@ test:
 
 about:
   home: https://github.com/Gurobi/gurobipy-pandas
-  license: Apache-2.0
+  license_file: LICENSE
   summary: 'Convenience wrapper for building optimization models from pandas data'
   description: |
     gurobipy-pandas is a convenient (optional) wrapper to connect pandas with gurobipy
