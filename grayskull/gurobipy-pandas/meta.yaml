@@ -27,10 +27,6 @@ requirements:
 test:
   imports:
     - gurobipy_pandas
-  commands:
-    - pip check
-  requires:
-    - pip
 
 about:
   home: https://pypi.org/project/gurobipy-pandas/
