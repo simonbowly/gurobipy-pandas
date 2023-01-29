@@ -21,7 +21,7 @@ requirements:
     - pip
   run:
     - python >=3.8
-    - gurobipy >=9.1
+    - gurobi >=9.1
     - pandas >=1.0
 
 test:
