@@ -1,0 +1,44 @@
+{% set name = "gurobipy-pandas" %}
+{% set version = "1.0.0" %}
+
+package:
+  name: {{ name|lower }}
+  version: {{ version }}
+
+source:
+  url: https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/gurobipy_pandas-{{ version }}.tar.gz
+  sha256: 47d370c116995781e5bd3a606c9aa9fdf07d9991475d582c496f0acc2df62ac2
+
+build:
+  noarch: python
+  script: {{ PYTHON }} -m pip install . -vv
+  number: 0
+
+requirements:
+  host:
+    - python >=3.8
+    - hatchling
+    - pip
+  run:
+    - python >=3.8
+    - gurobipy >=9.1
+    - pandas >=1.0
+
+test:
+  imports:
+    - gurobipy_pandas
+  commands:
+    - pip check
+  requires:
+    - pip
+
+about:
+  home: https://pypi.org/project/gurobipy-pandas/
+  summary: Pandas accessors for gurobipy interaction
+  dev_url: https://github.com/Gurobi/gurobipy-pandas
+  license: Apache-2.0
+  license_file: LICENSE
+
+extra:
+  recipe-maintainers:
+    - simonbowly
