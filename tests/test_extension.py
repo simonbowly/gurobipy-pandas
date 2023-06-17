@@ -70,3 +70,19 @@ class TestGurobiVarArrayGetItem(GurobiModelTestCase):
         self.assertEqual(len(obj), 5)
         for i in range(5):
             self.assertEqual(obj[i].VarName, f"x[{2*i + 1}]")
+
+
+class TestGurobiVarArrayTake(GurobiModelTestCase):
+    def setUp(self):
+        super().setUp()
+        mvar = self.model.addMVar((8,), name="x")
+        self.arr = GurobiVarArray(mvar)
+        self.model.update()
+
+    def test_1(self):
+        positions = [1, 3, 4, 7]
+        obj = self.arr.take(np.array(positions))
+        self.assertIsInstance(obj, GurobiVarArray)
+        self.assertEqual(len(obj), 4)
+        for i in range(4):
+            self.assertEqual(obj[i].VarName, f"x[{positions[i]}]")
