@@ -11,7 +11,7 @@ from pandas.api.extensions import (
 class GurobiVarDtype(ExtensionDtype):
 
     name = "gpvar"
-    type = gp.Var
+    type = gp.Var  # scalar type returned from indexing
     kind = "O"
 
     @classmethod
@@ -20,6 +20,14 @@ class GurobiVarDtype(ExtensionDtype):
 
 
 class GurobiVarArray(ExtensionArray):
+    def __init__(self, mvar):
+        assert isinstance(mvar, gp.MVar)
+        assert mvar.ndim == 1
+        self.mvar = mvar
+
+    def __len__(self):
+        return self.mvar.size
+
     @property
     def dtype(self) -> ExtensionDtype:
         return GurobiVarDtype()
