@@ -46,3 +46,6 @@ class GurobiVarArray(ExtensionArray):
         if isinstance(item, int):
             return self.mvar[item].item()
         return GurobiVarArray(self.mvar[item])  # TODO does this need a copy?
+
+    def take(self, indices, allow_fill=False, fill_value=None):
+        return GurobiVarArray(self.mvar[indices])
