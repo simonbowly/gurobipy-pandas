@@ -19,7 +19,7 @@ class GurobiVarDtype(ExtensionDtype):
 
 class GurobiVarArray(ExtensionArray):
     def __init__(self, mvar):
-        assert isinstance(mvar, gp.MVar)
+        assert isinstance(mvar, (gp.MVar, gp.MLinExpr))
         assert mvar.ndim == 1
         self.mvar = mvar
 
@@ -50,3 +50,6 @@ class GurobiVarArray(ExtensionArray):
 
     def copy(self):
         return GurobiVarArray(self.mvar.copy())
+
+    def __add__(self, other):
+        return GurobiVarArray(self.mvar + other)
