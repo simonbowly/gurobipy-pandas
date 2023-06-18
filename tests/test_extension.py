@@ -300,3 +300,12 @@ class TestGurobiMObjectArrayImul(GurobiModelTestCase):
         self.assertIsInstance(arr.dtype, GurobiLinExprDtype)
         for i in range(5):
             self.assert_linexpr_equal(arr[i], x[i].item() * (i + 1))
+
+
+class TestGurobiMObjectArrayPow(GurobiModelTestCase):
+    def test_power_2(self):
+        x = GurobiMObjectArray(self.model.addMVar((7,)))
+        arr = x**2
+        self.assertIsInstance(arr.dtype, GurobiQuadExprDtype)
+        for i in range(7):
+            self.assert_quadexpr_equal(x[i] ** 2, arr[i])

@@ -126,3 +126,6 @@ class GurobiMObjectArray(ExtensionArray):
             other = other.mobj
         self.mobj *= other
         return self
+
+    def __pow__(self, power):
+        return GurobiMObjectArray(self.mobj**power)
