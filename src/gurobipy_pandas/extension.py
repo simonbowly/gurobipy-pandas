@@ -71,8 +71,16 @@ class GurobiMObjectArray(ExtensionArray):
     def __radd__(self, other):
         return GurobiMObjectArray(other + self.mobj)
 
+    def __iadd__(self, other):
+        self.mobj += other
+        return self
+
     def __sub__(self, other):
         return GurobiMObjectArray(self.mobj - other)
 
     def __rsub__(self, other):
         return GurobiMObjectArray(other - self.mobj)
+
+    def __isub__(self, other):
+        self.mobj -= other
+        return self

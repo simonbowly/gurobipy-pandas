@@ -135,6 +135,17 @@ class TestGurobiMObjectArrayRadd(GurobiModelTestCase):
             self.assert_linexpr_equal(learr[i], vararr[i] + x)
 
 
+class TestGurobiMObjectArrayIadd(GurobiModelTestCase):
+    def test_scalar(self):
+        mvar = self.model.addMVar((5,))
+        arr = GurobiMObjectArray(mvar)
+        self.assertIsInstance(arr.dtype, GurobiVarDtype)
+        arr += 5.0
+        self.assertIsInstance(arr.dtype, GurobiLinExprDtype)
+        for i in range(5):
+            self.assert_linexpr_equal(arr[i], mvar[i].item() + 5.0)
+
+
 class TestGurobiMObjectArraySub(GurobiModelTestCase):
     def test_vararray_minus_linexpr(self):
         vararr = GurobiMObjectArray(self.model.addMVar((5,)))
@@ -156,3 +167,14 @@ class TestGurobiMObjectArrayRsub(GurobiModelTestCase):
         for i in range(5):
             # Term ordering is different as radd just delegates to add
             self.assert_linexpr_equal(learr[i], -vararr[i] + 2 * x + 4)
+
+
+class TestGurobiMObjectArrayIsub(GurobiModelTestCase):
+    def test_mvar_0d(self):
+        mvar = self.model.addMVar((5,))
+        arr = GurobiMObjectArray(mvar)
+        self.assertIsInstance(arr.dtype, GurobiVarDtype)
+        arr -= mvar[2]
+        self.assertIsInstance(arr.dtype, GurobiLinExprDtype)
+        for i in range(5):
+            self.assert_linexpr_equal(arr[i], mvar[i].item() - mvar[2].item())
