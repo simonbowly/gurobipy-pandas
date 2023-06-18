@@ -99,7 +99,9 @@ class TestAdd(GurobiModelTestCase):
         result = self.op(qe, x)
         self.assertIsInstance(result, pd.Series)
         for i in range(5):
-            self.assert_expression_equal(result[i], self.op(y * y + 2 * y + 3, x[i]))
+            self.assert_expression_equal_unordered(
+                result[i], self.op(y * y + 2 * y + 3, x[i])
+            )
 
 
 class TestSub(TestAdd):
@@ -185,7 +187,7 @@ class TestIadd(GurobiModelTestCase):
         qe = self.op(qe, x)
         self.assertIsInstance(qe, pd.Series)
         for i in range(3):
-            self.assert_expression_equal(qe[i], self.checkop(y * y, x[i]))
+            self.assert_expression_equal_unordered(qe[i], self.checkop(y * y, x[i]))
 
 
 class TestIsub(TestIadd):
@@ -212,7 +214,7 @@ class TestMul(GurobiModelTestCase):
         result = y * x
         self.assertIsInstance(result, pd.Series)
         for i in range(5):
-            self.assert_expression_equal(result[i], y * x[i])
+            self.assert_expression_equal_unordered(result[i], y * x[i])
 
     def test_varseries_linexpr(self):
         x = gppd.add_vars(self.model, pd.RangeIndex(5), name="x")
@@ -233,7 +235,7 @@ class TestMul(GurobiModelTestCase):
         result = le * x
         self.assertIsInstance(result, pd.Series)
         for i in range(5):
-            self.assert_expression_equal(result[i], 2 * y * x[i])
+            self.assert_expression_equal_unordered(result[i], 2 * y * x[i])
 
     def test_dataseries_quadexpr(self):
         s = pd.Series(list(range(5)))
@@ -264,5 +266,7 @@ class TestMul(GurobiModelTestCase):
         y = self.model.addVar(name="y")
         qe = y * y
         self.model.update()
-        with self.assertRaises(gp.GurobiError):
+        # The extension array is backed by MQuadExpr, which has different rules.
+        # We get a TypeError instead, as the operation isn't implemented.
+        with self.assertRaises(TypeError):
             x * qe
