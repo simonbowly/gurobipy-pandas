@@ -67,3 +67,6 @@ class GurobiMObjectArray(ExtensionArray):
 
     def __add__(self, other):
         return GurobiMObjectArray(self.mobj + other)
+
+    def __radd__(self, other):
+        return GurobiMObjectArray(self.mobj + other)

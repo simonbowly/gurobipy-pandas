@@ -111,10 +111,24 @@ class TestGurobiMObjectArrayCopy(GurobiModelTestCase):
 class TestGurobiMObjectArrayAdd(GurobiModelTestCase):
     # Fairly minimal tests here. The Array just delegates to gurobi M* class
     # operations, and more extensive testing is done in test_operators.
-    def test_var_plus_scalar(self):
+    def test_vararray_plus_scalar(self):
         vararr = GurobiMObjectArray(self.model.addMVar((5,)))
         self.assertIsInstance(vararr.dtype, GurobiVarDtype)
         learr = vararr + 2.0
         self.assertIsInstance(learr.dtype, GurobiLinExprDtype)
         for i in range(5):
             self.assert_linexpr_equal(learr[i], vararr[i] + 2.0)
+
+
+class TestGurobiMObjectArrayRadd(GurobiModelTestCase):
+    # Fairly minimal tests here. The Array just delegates to gurobi M* class
+    # operations, and more extensive testing is done in test_operators.
+    def test_var_plus_vararray(self):
+        vararr = GurobiMObjectArray(self.model.addMVar((5,)))
+        x = self.model.addVar()
+        self.assertIsInstance(vararr.dtype, GurobiVarDtype)
+        learr = x + vararr
+        self.assertIsInstance(learr.dtype, GurobiLinExprDtype)
+        for i in range(5):
+            # Term ordering is different as radd just delegates to add
+            self.assert_linexpr_equal(learr[i], vararr[i] + x)
