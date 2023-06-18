@@ -86,3 +86,14 @@ class TestGurobiVarArrayTake(GurobiModelTestCase):
         self.assertEqual(len(obj), 4)
         for i in range(4):
             self.assertEqual(obj[i].VarName, f"x[{positions[i]}]")
+
+
+class TestGurobiVarArrayCopy(GurobiModelTestCase):
+    def test_1(self):
+        mvar = self.model.addMVar((20,))
+        arr = GurobiVarArray(mvar)
+        arr_copy = arr.copy()
+        self.assertIsNot(arr, arr_copy)
+        self.assertIsNot(arr.mvar, arr_copy.mvar)
+        for i in range(20):
+            self.assertTrue(arr[i].sameAs(arr_copy[i]))
