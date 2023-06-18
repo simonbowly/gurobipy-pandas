@@ -249,6 +249,52 @@ class TestGurobiMObjectArrayIsNa(GurobiModelTestCase):
         assert_array_equal(vararr.isna(), nan_mask, strict=True)
 
 
+class TestGurobiMObjectArrayReduce(GurobiModelTestCase):
+    def test_sum(self):
+        # No missing values, scalar result
+        mvar = self.model.addMVar((5,))
+        vararr = create_gurobimobjectarray(mvar)
+
+        result = vararr._reduce("sum")
+
+        self.assert_linexpr_equal(result, mvar.sum().item())
+
+
+class TestGurobiMObjectArrayFromSequence(GurobiModelTestCase):
+    def test_vars(self):
+        xs = list(self.model.addVars(3).values())
+        vararr = GurobiMObjectArray._from_sequence(xs)
+
+        self.assertIsInstance(vararr, GurobiMObjectArray)
+        self.assertIsInstance(vararr.dtype, GurobiVarDtype)
+        self.assertFalse(vararr.isna().any())
+        for i in range(3):
+            self.assertTrue(vararr[i].sameAs(xs[i]))
+
+    def test_linexprs(self):
+        xs = self.model.addVars(3).values()
+        les = [(i + 1) * x - 2.0 for i, x in enumerate(xs)]
+        arr = GurobiMObjectArray._from_sequence(les)
+
+        self.assertIsInstance(arr, GurobiMObjectArray)
+        self.assertIsInstance(arr.dtype, GurobiLinExprDtype)
+        self.assertFalse(arr.isna().any())
+        for i in range(3):
+            self.assert_linexpr_equal(arr[i], les[i])
+
+    def test_quadexprs(self):
+        xs = self.model.addVars(3).values()
+        ys = self.model.addVars(3).values()
+        qes = [x * y + x - i for i, (x, y) in enumerate(zip(xs, ys))]
+        arr = GurobiMObjectArray._from_sequence(qes)
+
+        self.assertIsInstance(arr, GurobiMObjectArray)
+        self.assertIsInstance(arr.dtype, GurobiQuadExprDtype)
+        self.assertFalse(arr.isna().any())
+        for i in range(3):
+            self.assert_quadexpr_equal(arr[i], qes[i])
+
+
 # Only minimal tests for arithmetic operators here. The array type just
 # delegates to gurobi M* class operations, and more extensive testing is done on
 # the resulting Series in test_operators.

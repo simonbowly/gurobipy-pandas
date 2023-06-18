@@ -61,6 +61,21 @@ class GurobiMObjectArray(ExtensionArray):
         elif isinstance(self.mobj, gp.MQuadExpr):
             return GurobiQuadExprDtype()
 
+    @classmethod
+    def _from_sequence(cls, scalars, *, dtype=None, copy=False):
+        if any(isinstance(s, gp.QuadExpr) for s in scalars):
+            mobj = gp.MQuadExpr.zeros(len(scalars))
+            for i, s in enumerate(scalars):
+                mobj[i] += s
+        elif any(isinstance(s, gp.LinExpr) for s in scalars):
+            mobj = gp.MLinExpr.zeros(len(scalars))
+            for i, s in enumerate(scalars):
+                mobj[i] += s
+        else:
+            mobj = gp.MVar.fromlist(scalars)
+        nan_mask = np.zeros(mobj.shape, dtype=bool)
+        return GurobiMObjectArray(mobj, nan_mask)
+
     def __getitem__(self, item):
         """
         Pandas has clear guidance here in ExtensionDType:
@@ -96,6 +111,9 @@ class GurobiMObjectArray(ExtensionArray):
 
     def isna(self):
         return self.nan_mask.copy()
+
+    def _reduce(self, name, skipna=True, **kwargs):
+        return self.mobj.sum().item()
 
     def _prepare_operands(self, other, mul=False):
         # Return an operand which can work with self.mobj, and the correct
