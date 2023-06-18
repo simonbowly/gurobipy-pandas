@@ -122,6 +122,14 @@ class TestGurobiMObjectArrayAdd(GurobiModelTestCase):
         for i in range(5):
             self.assert_linexpr_equal(learr[i], vararr[i] + 2.0)
 
+    def test_vararray(self):
+        x = GurobiMObjectArray(self.model.addMVar((5,)))
+        y = GurobiMObjectArray(self.model.addMVar((5,)))
+        learr = x + y
+        self.assertIsInstance(learr.dtype, GurobiLinExprDtype)
+        for i in range(5):
+            self.assert_linexpr_equal(learr[i], x[i] + y[i])
+
 
 class TestGurobiMObjectArrayRadd(GurobiModelTestCase):
     def test_var_plus_vararray(self):
@@ -145,6 +153,16 @@ class TestGurobiMObjectArrayIadd(GurobiModelTestCase):
         for i in range(5):
             self.assert_linexpr_equal(arr[i], mvar[i].item() + 5.0)
 
+    def test_vararray(self):
+        x = self.model.addMVar((5,))
+        y = self.model.addMVar((5,))
+        xarr = GurobiMObjectArray(x)
+        yarr = GurobiMObjectArray(y)
+        xarr += yarr
+        self.assertIsInstance(xarr.dtype, GurobiLinExprDtype)
+        for i in range(5):
+            self.assert_linexpr_equal(xarr[i], x[i].item() + y[i].item())
+
 
 class TestGurobiMObjectArraySub(GurobiModelTestCase):
     def test_vararray_minus_linexpr(self):
@@ -155,6 +173,14 @@ class TestGurobiMObjectArraySub(GurobiModelTestCase):
         self.assertIsInstance(learr.dtype, GurobiLinExprDtype)
         for i in range(5):
             self.assert_linexpr_equal(learr[i], vararr[i] - x - 1.0)
+
+    def test_vararray(self):
+        x = GurobiMObjectArray(self.model.addMVar((5,)))
+        y = GurobiMObjectArray(self.model.addMVar((5,)))
+        learr = x - y
+        self.assertIsInstance(learr.dtype, GurobiLinExprDtype)
+        for i in range(5):
+            self.assert_linexpr_equal(learr[i], x[i] - y[i])
 
 
 class TestGurobiMObjectArrayRsub(GurobiModelTestCase):

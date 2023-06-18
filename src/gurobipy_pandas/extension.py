@@ -66,19 +66,27 @@ class GurobiMObjectArray(ExtensionArray):
         return GurobiMObjectArray(self.mobj.copy())
 
     def __add__(self, other):
+        if isinstance(other, GurobiMObjectArray):
+            other = other.mobj
         return GurobiMObjectArray(self.mobj + other)
 
     def __radd__(self, other):
+        assert not isinstance(other, GurobiMObjectArray)
         return GurobiMObjectArray(other + self.mobj)
 
     def __iadd__(self, other):
+        if isinstance(other, GurobiMObjectArray):
+            other = other.mobj
         self.mobj += other
         return self
 
     def __sub__(self, other):
+        if isinstance(other, GurobiMObjectArray):
+            other = other.mobj
         return GurobiMObjectArray(self.mobj - other)
 
     def __rsub__(self, other):
+        assert not isinstance(other, GurobiMObjectArray)
         return GurobiMObjectArray(other - self.mobj)
 
     def __isub__(self, other):
