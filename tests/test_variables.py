@@ -3,6 +3,7 @@ import pandas as pd
 from gurobipy import GRB
 from pandas.testing import assert_index_equal
 
+from gurobipy_pandas.extension import GurobiVarDtype
 from gurobipy_pandas.variables import add_vars_from_dataframe, add_vars_from_index
 
 from .utils import GurobiModelTestCase
@@ -17,6 +18,9 @@ class TestAddVarsFromIndex(GurobiModelTestCase):
         index = pd.RangeIndex(5, 10)
 
         varseries = add_vars_from_index(self.model, index)
+
+        # TODO parameterize tests by global flag
+        self.assertIsInstance(varseries.dtype, GurobiVarDtype)
 
         self.model.update()
         self.assertEqual(self.model.NumVars, 5)
@@ -423,6 +427,9 @@ class TestAddVarsFromDataFrame(GurobiModelTestCase):
         # from Gurobi
 
         varseries = add_vars_from_dataframe(self.model, self.data)
+
+        # TODO parameterize tests by global flag
+        self.assertIsInstance(varseries.dtype, GurobiVarDtype)
 
         self.model.update()
         self.assertEqual(self.model.NumVars, 4)
