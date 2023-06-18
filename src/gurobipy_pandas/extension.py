@@ -44,7 +44,7 @@ class GurobiMObjectArray(ExtensionArray):
     def __init__(self, mobj, nan_mask):
         assert isinstance(mobj, (gp.MVar, gp.MLinExpr, gp.MQuadExpr))
         assert mobj.ndim == 1
-        assert np.dtype(bool) == nan_mask.dtype
+        assert nan_mask.dtype == bool
         assert nan_mask.shape == mobj.shape
         self.mobj = mobj
         self.nan_mask = nan_mask
@@ -83,7 +83,7 @@ class GurobiMObjectArray(ExtensionArray):
             return GurobiMObjectArray(self.mobj[item], self.nan_mask[item])
 
     def take(self, indices, allow_fill=False, fill_value=None):
-        assert fill_value is None
+        assert fill_value is None or fill_value is np.nan
         if allow_fill:
             nan_mask = self.nan_mask[indices] | (indices == -1)
         else:
