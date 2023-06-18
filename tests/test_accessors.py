@@ -5,6 +5,7 @@ from gurobipy import GRB
 from pandas.testing import assert_index_equal, assert_series_equal
 
 import gurobipy_pandas as gppd
+from gurobipy_pandas.extension import GurobiVarDtype
 
 from .utils import GurobiModelTestCase
 
@@ -30,7 +31,8 @@ class TestDataFrameAddVars(GurobiModelTestCase):
         assert_index_equal(result.index, self.df.index)
         self.assertEqual(list(result.columns), ["a", "b", "x"])
         self.assertEqual(list(self.df.columns), ["a", "b"])
-        self.assertEqual(result["x"].dtype, object)
+        # self.assertEqual(result["x"].dtype, object)
+        self.assertIsInstance(result["x"].dtype, GurobiVarDtype)
         for i, v in zip(result.index, result["x"]):
             self.assertIsInstance(v, gp.Var)
             self.assertEqual(v.VarName, f"x[{i}]")
@@ -47,7 +49,8 @@ class TestDataFrameAddVars(GurobiModelTestCase):
         assert_index_equal(result.index, self.df.index)
         self.assertEqual(list(result.columns), ["a", "b", "x"])
         self.assertEqual(list(self.df.columns), ["a", "b"])
-        self.assertEqual(result["x"].dtype, object)
+        # self.assertEqual(result["x"].dtype, object)
+        self.assertIsInstance(result["x"].dtype, GurobiVarDtype)
         for i, v in zip(result.index, result["x"]):
             self.assertIsInstance(v, gp.Var)
             self.assertEqual(v.VarName, f"x[{i}]")
