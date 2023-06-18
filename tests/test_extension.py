@@ -28,17 +28,28 @@ class TestRegisteredGurobiDtypes(unittest.TestCase):
         self.assertTrue(is_extension_array_dtype(dtype))
 
 
-class TestCreateGurobiMObjectArray(GurobiModelTestCase):
-    def test_init(self):
-        # Constructor takes ownership of an MVar
-        mvar = self.model.addMVar((10,))
-        arr = GurobiMObjectArray(mvar)
-        self.assertEqual(len(arr), 10)
+class TestGurobiMObjectArrayDtypes(GurobiModelTestCase):
+    # Constructor takes ownership of the object it is passed.
+    # Returned .dtype is dependent on the type of the inner object.
 
-    def test_dtype(self):
+    def test_var_dtype(self):
         mvar = self.model.addMVar((10,))
         arr = GurobiMObjectArray(mvar)
         self.assertIsInstance(arr.dtype, GurobiVarDtype)
+        self.assertEqual(len(arr), 10)
+
+    def test_linexpr_dtype(self):
+        x = self.model.addMVar((5,))
+        arr = GurobiMObjectArray(2.0 * x + 5)
+        self.assertIsInstance(arr.dtype, GurobiLinExprDtype)
+        self.assertEqual(len(arr), 5)
+
+    def test_quadexpr_dtype(self):
+        x = self.model.addMVar((7,))
+        y = self.model.addMVar((7,))
+        arr = GurobiMObjectArray(2.0 * x * y + x + 5)
+        self.assertIsInstance(arr.dtype, GurobiQuadExprDtype)
+        self.assertEqual(len(arr), 7)
 
 
 class TestGurobiMObjectArrayGetItem(GurobiModelTestCase):
