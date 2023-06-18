@@ -1,15 +1,13 @@
 import gurobipy as gp
-
 from pandas.api.extensions import (
-    ExtensionDtype,
     ExtensionArray,
+    ExtensionDtype,
     register_extension_dtype,
 )
 
 
 @register_extension_dtype
 class GurobiVarDtype(ExtensionDtype):
-
     name = "gpvar"
     type = gp.Var  # scalar type returned from indexing
     kind = "O"

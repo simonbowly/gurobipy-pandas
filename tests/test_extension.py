@@ -2,7 +2,7 @@ import unittest
 
 import gurobipy as gp
 import numpy as np
-from pandas.api.types import pandas_dtype, is_extension_array_dtype
+from pandas.api.types import is_extension_array_dtype, pandas_dtype
 
 from gurobipy_pandas.extension import GurobiVarArray, GurobiVarDtype
 
