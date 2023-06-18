@@ -1,5 +1,4 @@
 import gurobipy as gp
-import numpy as np
 from pandas.api.extensions import (
     ExtensionArray,
     ExtensionDtype,
@@ -41,15 +40,12 @@ class GurobiQuadExprDtype(ExtensionDtype):
 
 
 class GurobiMObjectArray(ExtensionArray):
-    def __init__(self, mobj, nan_mask=None):
+    def __init__(self, mobj, nan_mask):
         assert isinstance(mobj, (gp.MVar, gp.MLinExpr, gp.MQuadExpr))
         assert mobj.ndim == 1
+        assert nan_mask.shape == mobj.shape
         self.mobj = mobj
-        if nan_mask is None:
-            self.nan_mask = np.zeros(mobj.shape, dtype=bool)
-        else:
-            assert nan_mask.shape == mobj.shape
-            self.nan_mask = nan_mask
+        self.nan_mask = nan_mask
 
     def __len__(self):
         return self.mobj.size
