@@ -191,15 +191,52 @@ class TestGurobiMObjectArrayTake(GurobiModelTestCase):
 
 
 class TestGurobiMObjectArrayCopy(GurobiModelTestCase):
-    def test_1(self):
+    def test_variables(self):
+        # Test same variables are referenced
         mvar = self.model.addMVar((20,))
-        arr = create_gurobimobjectarray(mvar)
+        arr = GurobiMObjectArray(mvar, np.zeros((20,), dtype=bool))
         arr_copy = arr.copy()
         self.assertIsNot(arr, arr_copy)
         for i in range(20):
             self.assertTrue(arr[i].sameAs(arr_copy[i]))
 
-    # TODO add more tests here after __iadd__ works
+    def test_linear(self):
+        # Test linear expressions are copied, without backrefs
+        mvar = self.model.addMVar((15,))
+        y = self.model.addVar()
+        arr = GurobiMObjectArray(mvar * 2.0 + 1.0, np.zeros((15,), dtype=bool))
+        arr_copy = arr.copy()
+        self.assertIsNot(arr, arr_copy)
+
+        for i in range(15):
+            self.assert_linexpr_equal(arr[i], 2.0 * mvar[i].item() + 1.0)
+            self.assert_linexpr_equal(arr_copy[i], 2.0 * mvar[i].item() + 1.0)
+
+        arr += 5.0
+
+        for i in range(15):
+            self.assert_linexpr_equal(arr[i], 2.0 * mvar[i].item() + 6.0)
+            self.assert_linexpr_equal(arr_copy[i], 2.0 * mvar[i].item() + 1.0)
+
+        arr += y
+
+        for i in range(15):
+            self.assert_linexpr_equal(arr[i], 2.0 * mvar[i].item() + 6.0 + y)
+            self.assert_linexpr_equal(arr_copy[i], 2.0 * mvar[i].item() + 1.0)
+
+    def test_nulls(self):
+        # Test null mask is copied over
+        mvar = self.model.addMVar((5,))
+        nan_mask = np.array([True, False, True, False, False])
+        arr = GurobiMObjectArray(mvar, nan_mask)
+        arr_copy = arr.copy()
+        self.assertIsNot(arr, arr_copy)
+
+        self.assertIsNone(arr_copy[0], None)
+        self.assertTrue(arr_copy[1].sameAs(arr[1]))
+        self.assertIsNone(arr_copy[2], None)
+        self.assertTrue(arr_copy[3].sameAs(arr[3]))
+        self.assertTrue(arr_copy[4].sameAs(arr[4]))
 
 
 # Only minimal tests for arithmetic operators here. The array type just

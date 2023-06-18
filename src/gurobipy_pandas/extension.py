@@ -1,4 +1,5 @@
 import gurobipy as gp
+import numpy as np
 from pandas.api.extensions import (
     ExtensionArray,
     ExtensionDtype,
@@ -43,6 +44,7 @@ class GurobiMObjectArray(ExtensionArray):
     def __init__(self, mobj, nan_mask):
         assert isinstance(mobj, (gp.MVar, gp.MLinExpr, gp.MQuadExpr))
         assert mobj.ndim == 1
+        assert np.dtype(bool) == nan_mask.dtype
         assert nan_mask.shape == mobj.shape
         self.mobj = mobj
         self.nan_mask = nan_mask
@@ -90,7 +92,7 @@ class GurobiMObjectArray(ExtensionArray):
         return GurobiMObjectArray(mobj, nan_mask)
 
     def copy(self):
-        return GurobiMObjectArray(self.mobj.copy())
+        return GurobiMObjectArray(self.mobj.copy(), self.nan_mask.copy())
 
     def _prepare_operands(self, other, mul=False):
         # Return an operand which can work with self.mobj, and the correct
