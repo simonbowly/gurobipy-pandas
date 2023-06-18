@@ -111,11 +111,15 @@ class GurobiMObjectArray(ExtensionArray):
     def __mul__(self, other):
         if isinstance(other, GurobiMObjectArray):
             other = other.mobj
+        # Workaround a missing operator implementation in gurobipy <= 10.0.2
+        if isinstance(self.mobj, (gp.MVar, gp.MLinExpr)) and isinstance(
+            other, gp.LinExpr
+        ):
+            other = gp.MLinExpr.zeros(tuple()) + other
         return GurobiMObjectArray(self.mobj * other)
 
     def __rmul__(self, other):
-        assert not isinstance(other, GurobiMObjectArray)
-        return GurobiMObjectArray(other * self.mobj)
+        return self * other
 
     def __imul__(self, other):
         if isinstance(other, GurobiMObjectArray):
