@@ -82,5 +82,7 @@ class GurobiMObjectArray(ExtensionArray):
         return GurobiMObjectArray(other - self.mobj)
 
     def __isub__(self, other):
+        if isinstance(other, GurobiMObjectArray):
+            other = other.mobj
         self.mobj -= other
         return self

@@ -178,3 +178,13 @@ class TestGurobiMObjectArrayIsub(GurobiModelTestCase):
         self.assertIsInstance(arr.dtype, GurobiLinExprDtype)
         for i in range(5):
             self.assert_linexpr_equal(arr[i], mvar[i].item() - mvar[2].item())
+
+    def test_vararray(self):
+        x = self.model.addMVar((5,))
+        y = self.model.addMVar((5,))
+        xarr = GurobiMObjectArray(x)
+        yarr = GurobiMObjectArray(y)
+        xarr -= yarr
+        self.assertIsInstance(xarr.dtype, GurobiLinExprDtype)
+        for i in range(5):
+            self.assert_linexpr_equal(xarr[i], x[i].item() - y[i].item())
