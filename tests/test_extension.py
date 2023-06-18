@@ -108,9 +108,12 @@ class TestGurobiMObjectArrayCopy(GurobiModelTestCase):
     # TODO add more tests here after __iadd__ works
 
 
+# Only minimal tests for arithmetic operators here. The array type just
+# delegates to gurobi M* class operations, and more extensive testing is done on
+# the resulting Series in test_operators.
+
+
 class TestGurobiMObjectArrayAdd(GurobiModelTestCase):
-    # Fairly minimal tests here. The Array just delegates to gurobi M* class
-    # operations, and more extensive testing is done in test_operators.
     def test_vararray_plus_scalar(self):
         vararr = GurobiMObjectArray(self.model.addMVar((5,)))
         self.assertIsInstance(vararr.dtype, GurobiVarDtype)
@@ -121,8 +124,6 @@ class TestGurobiMObjectArrayAdd(GurobiModelTestCase):
 
 
 class TestGurobiMObjectArrayRadd(GurobiModelTestCase):
-    # Fairly minimal tests here. The Array just delegates to gurobi M* class
-    # operations, and more extensive testing is done in test_operators.
     def test_var_plus_vararray(self):
         vararr = GurobiMObjectArray(self.model.addMVar((5,)))
         x = self.model.addVar()
@@ -132,3 +133,26 @@ class TestGurobiMObjectArrayRadd(GurobiModelTestCase):
         for i in range(5):
             # Term ordering is different as radd just delegates to add
             self.assert_linexpr_equal(learr[i], vararr[i] + x)
+
+
+class TestGurobiMObjectArraySub(GurobiModelTestCase):
+    def test_vararray_minus_linexpr(self):
+        vararr = GurobiMObjectArray(self.model.addMVar((5,)))
+        x = self.model.addVar()
+        self.assertIsInstance(vararr.dtype, GurobiVarDtype)
+        learr = vararr - (x + 1.0)
+        self.assertIsInstance(learr.dtype, GurobiLinExprDtype)
+        for i in range(5):
+            self.assert_linexpr_equal(learr[i], vararr[i] - x - 1.0)
+
+
+class TestGurobiMObjectArrayRsub(GurobiModelTestCase):
+    def test_linexpr_minus_vararray(self):
+        vararr = GurobiMObjectArray(self.model.addMVar((5,)))
+        x = self.model.addVar()
+        self.assertIsInstance(vararr.dtype, GurobiVarDtype)
+        learr = (2 * x + 4) - vararr
+        self.assertIsInstance(learr.dtype, GurobiLinExprDtype)
+        for i in range(5):
+            # Term ordering is different as radd just delegates to add
+            self.assert_linexpr_equal(learr[i], -vararr[i] + 2 * x + 4)

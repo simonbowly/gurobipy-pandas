@@ -69,4 +69,10 @@ class GurobiMObjectArray(ExtensionArray):
         return GurobiMObjectArray(self.mobj + other)
 
     def __radd__(self, other):
-        return GurobiMObjectArray(self.mobj + other)
+        return GurobiMObjectArray(other + self.mobj)
+
+    def __sub__(self, other):
+        return GurobiMObjectArray(self.mobj - other)
+
+    def __rsub__(self, other):
+        return GurobiMObjectArray(other - self.mobj)
