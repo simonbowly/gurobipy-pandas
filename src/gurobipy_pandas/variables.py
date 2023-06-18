@@ -9,7 +9,7 @@ import gurobipy as gp
 import pandas as pd
 from gurobipy import GRB
 
-from gurobipy_pandas.extension import GurobiVarArray
+from gurobipy_pandas.extension import GurobiMObjectArray
 from gurobipy_pandas.util import align_series, create_names, gppd_global_options
 
 
@@ -108,7 +108,7 @@ def add_vars_from_index(
         model.update()
 
     if gppd_global_options["use_extension"]:
-        return pd.Series(index=index, data=GurobiVarArray(newvars), name=seriesname)
+        return pd.Series(index=index, data=GurobiMObjectArray(newvars), name=seriesname)
     else:
         return pd.Series(index=index, data=newvars.tolist(), name=seriesname)
 
@@ -183,6 +183,6 @@ def add_vars_from_dataframe(
         model.update()
 
     if gppd_global_options["use_extension"]:
-        return pd.Series(index=data.index, data=GurobiVarArray(newvars), name=name)
+        return pd.Series(index=data.index, data=GurobiMObjectArray(newvars), name=name)
     else:
         return pd.Series(index=data.index, data=newvars.tolist(), name=name)

@@ -14,17 +14,17 @@ class GurobiVarDtype(ExtensionDtype):
 
     @classmethod
     def construct_array_type(cls):
-        return GurobiVarArray
+        return GurobiMObjectArray
 
 
-class GurobiVarArray(ExtensionArray):
-    def __init__(self, mvar):
-        assert isinstance(mvar, (gp.MVar, gp.MLinExpr))
-        assert mvar.ndim == 1
-        self.mvar = mvar
+class GurobiMObjectArray(ExtensionArray):
+    def __init__(self, mobj):
+        assert isinstance(mobj, (gp.MVar, gp.MLinExpr))
+        assert mobj.ndim == 1
+        self.mobj = mobj
 
     def __len__(self):
-        return self.mvar.size
+        return self.mobj.size
 
     @property
     def dtype(self) -> ExtensionDtype:
@@ -42,14 +42,14 @@ class GurobiVarArray(ExtensionArray):
           to the values where ``item`` is True.
         """
         if isinstance(item, int):
-            return self.mvar[item].item()
-        return GurobiVarArray(self.mvar[item])  # TODO does this need a copy?
+            return self.mobj[item].item()
+        return GurobiMObjectArray(self.mobj[item])  # TODO does this need a copy?
 
     def take(self, indices, allow_fill=False, fill_value=None):
-        return GurobiVarArray(self.mvar[indices])  # TODO does this need a copy?
+        return GurobiMObjectArray(self.mobj[indices])  # TODO does this need a copy?
 
     def copy(self):
-        return GurobiVarArray(self.mvar.copy())
+        return GurobiMObjectArray(self.mobj.copy())
 
     def __add__(self, other):
-        return GurobiVarArray(self.mvar + other)
+        return GurobiMObjectArray(self.mobj + other)
