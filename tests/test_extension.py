@@ -214,3 +214,43 @@ class TestGurobiMObjectArrayIsub(GurobiModelTestCase):
         self.assertIsInstance(xarr.dtype, GurobiLinExprDtype)
         for i in range(5):
             self.assert_linexpr_equal(xarr[i], x[i].item() - y[i].item())
+
+
+class TestGurobiMObjectArrayMul(GurobiModelTestCase):
+    def test_vararray_times_scalar(self):
+        vararr = GurobiMObjectArray(self.model.addMVar((5,)))
+        self.assertIsInstance(vararr.dtype, GurobiVarDtype)
+        learr = vararr * 2.0
+        self.assertIsInstance(learr.dtype, GurobiLinExprDtype)
+        for i in range(5):
+            self.assert_linexpr_equal(learr[i], vararr[i] * 2.0)
+
+    def test_vararray_times_array(self):
+        vararr = GurobiMObjectArray(self.model.addMVar((5,)))
+        a = np.arange(1, 6)
+        self.assertIsInstance(vararr.dtype, GurobiVarDtype)
+        learr = vararr * a
+        self.assertIsInstance(learr.dtype, GurobiLinExprDtype)
+        for i in range(5):
+            self.assert_linexpr_equal(learr[i], vararr[i] * (i + 1))
+
+
+class TestGurobiMObjectArrayImul(GurobiModelTestCase):
+    def test_vararray_times_scalar(self):
+        x = self.model.addMVar((5,))
+        arr = GurobiMObjectArray(x)
+        self.assertIsInstance(arr.dtype, GurobiVarDtype)
+        arr *= 2.0
+        self.assertIsInstance(arr.dtype, GurobiLinExprDtype)
+        for i in range(5):
+            self.assert_linexpr_equal(arr[i], x[i].item() * 2.0)
+
+    def test_vararray_times_array(self):
+        x = self.model.addMVar((5,))
+        arr = GurobiMObjectArray(x)
+        self.assertIsInstance(arr.dtype, GurobiVarDtype)
+        a = np.arange(1, 6)
+        arr *= a
+        self.assertIsInstance(arr.dtype, GurobiLinExprDtype)
+        for i in range(5):
+            self.assert_linexpr_equal(arr[i], x[i].item() * (i + 1))

@@ -94,3 +94,14 @@ class GurobiMObjectArray(ExtensionArray):
             other = other.mobj
         self.mobj -= other
         return self
+
+    def __mul__(self, other):
+        if isinstance(other, GurobiMObjectArray):
+            other = other.mobj
+        return GurobiMObjectArray(self.mobj * other)
+
+    def __imul__(self, other):
+        if isinstance(other, GurobiMObjectArray):
+            other = other.mobj
+        self.mobj *= other
+        return self
