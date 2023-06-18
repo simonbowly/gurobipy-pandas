@@ -2,6 +2,7 @@ import unittest
 
 import gurobipy as gp
 import numpy as np
+from numpy.testing import assert_array_equal
 from pandas.api.types import is_extension_array_dtype, pandas_dtype
 
 from gurobipy_pandas.extension import (
@@ -237,6 +238,15 @@ class TestGurobiMObjectArrayCopy(GurobiModelTestCase):
         self.assertIsNone(arr_copy[2], None)
         self.assertTrue(arr_copy[3].sameAs(arr[3]))
         self.assertTrue(arr_copy[4].sameAs(arr[4]))
+
+
+class TestGurobiMObjectArrayIsNa(GurobiModelTestCase):
+    def test_1(self):
+        mvar = self.model.addMVar((6,))
+        nan_mask = np.array([True, True, False, False, True, False])
+        vararr = GurobiMObjectArray(mvar, nan_mask)
+
+        assert_array_equal(vararr.isna(), nan_mask, strict=True)
 
 
 # Only minimal tests for arithmetic operators here. The array type just

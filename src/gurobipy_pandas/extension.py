@@ -94,6 +94,9 @@ class GurobiMObjectArray(ExtensionArray):
     def copy(self):
         return GurobiMObjectArray(self.mobj.copy(), self.nan_mask.copy())
 
+    def isna(self):
+        return self.nan_mask.copy()
+
     def _prepare_operands(self, other, mul=False):
         # Return an operand which can work with self.mobj, and the correct
         # nan mask for the result.
