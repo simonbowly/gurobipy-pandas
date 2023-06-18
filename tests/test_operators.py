@@ -152,7 +152,9 @@ class TestIadd(GurobiModelTestCase):
         y = self.op(y, x)
         self.assertIsInstance(y, pd.Series)
         for i in range(3):
-            self.assert_expression_equal(y[i], self.checkop(y0, x[i]))
+            # Term order depends on whether scalar operations or the extension
+            # type are involved
+            self.assert_expression_equal_unordered(y[i], self.checkop(y0, x[i]))
 
     @unittest.skipIf(GUROBIPY_MAJOR_VERSION < 10, "Operator precedence in v9")
     def test_linexpr_varseries(self):
@@ -169,7 +171,9 @@ class TestIadd(GurobiModelTestCase):
         le = self.op(le, x)
         self.assertIsInstance(le, pd.Series)
         for i in range(3):
-            self.assert_expression_equal(le[i], self.checkop(2 * y, x[i]))
+            # Term order depends on whether scalar operations or the extension
+            # type are involved
+            self.assert_expression_equal_unordered(le[i], self.checkop(2 * y, x[i]))
 
     @unittest.skipIf(GUROBIPY_MAJOR_VERSION < 10, "Operator precedence in v9")
     def test_quadexpr_varseries(self):
