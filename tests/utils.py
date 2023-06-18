@@ -22,6 +22,8 @@ class GurobiModelTestCase(unittest.TestCase):
             self.assert_linexpr_equal(expr1, expr2)
         elif isinstance(expr1, gp.QuadExpr):
             self.assert_quadexpr_equal(expr1, expr2)
+        else:
+            self.fail("Bad type passed to assert_expression_equal_unordered")
 
     def assert_linexpr_equal(self, expr1, expr2):
         self.assertIsInstance(expr1, gp.LinExpr)
@@ -45,8 +47,8 @@ class GurobiModelTestCase(unittest.TestCase):
     def assert_expression_equal_unordered(self, expr1, expr2):
         if isinstance(expr1, gp.LinExpr):
             self.assert_linexpr_equal_unordered(expr1, expr2)
-        elif isinstance(expr1, gp.QuadExpr):
-            assert False
+        else:
+            self.fail("Bad type passed to assert_expression_equal_unordered")
 
     def assert_linexpr_equal_unordered(self, expr1, expr2):
         # Order-independent (no grouping of like terms)
