@@ -6,6 +6,7 @@ These are used to build the actual API methods.
 from typing import Optional, Union
 
 import gurobipy as gp
+import numpy as np
 import pandas as pd
 from gurobipy import GRB
 
@@ -108,7 +109,11 @@ def add_vars_from_index(
         model.update()
 
     if gppd_global_options["use_extension"]:
-        return pd.Series(index=index, data=GurobiMObjectArray(newvars), name=seriesname)
+        return pd.Series(
+            index=index,
+            data=GurobiMObjectArray(newvars, np.zeros(newvars.shape, dtype=bool)),
+            name=seriesname,
+        )
     else:
         return pd.Series(index=index, data=newvars.tolist(), name=seriesname)
 
@@ -183,6 +188,10 @@ def add_vars_from_dataframe(
         model.update()
 
     if gppd_global_options["use_extension"]:
-        return pd.Series(index=data.index, data=GurobiMObjectArray(newvars), name=name)
+        return pd.Series(
+            index=data.index,
+            data=GurobiMObjectArray(newvars, np.zeros(newvars.shape, dtype=bool)),
+            name=name,
+        )
     else:
         return pd.Series(index=data.index, data=newvars.tolist(), name=name)
