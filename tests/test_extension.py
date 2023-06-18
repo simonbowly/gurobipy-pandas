@@ -258,6 +258,25 @@ class TestGurobiMObjectArrayMul(GurobiModelTestCase):
             self.assert_quadexpr_equal(qearr[i], x[i] * y[i])
 
 
+class TestGurobiMObjectArrayRmul(GurobiModelTestCase):
+    def test_vararray_times_scalar(self):
+        vararr = GurobiMObjectArray(self.model.addMVar((5,)))
+        self.assertIsInstance(vararr.dtype, GurobiVarDtype)
+        learr = 2.0 * vararr
+        self.assertIsInstance(learr.dtype, GurobiLinExprDtype)
+        for i in range(5):
+            self.assert_linexpr_equal(learr[i], vararr[i] * 2.0)
+
+    def test_vararray_times_array(self):
+        vararr = GurobiMObjectArray(self.model.addMVar((5,)))
+        a = np.arange(1, 6)
+        self.assertIsInstance(vararr.dtype, GurobiVarDtype)
+        learr = a * vararr
+        self.assertIsInstance(learr.dtype, GurobiLinExprDtype)
+        for i in range(5):
+            self.assert_linexpr_equal(learr[i], vararr[i] * (i + 1))
+
+
 class TestGurobiMObjectArrayImul(GurobiModelTestCase):
     def test_vararray_times_scalar(self):
         x = self.model.addMVar((5,))

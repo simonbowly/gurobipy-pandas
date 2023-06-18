@@ -113,6 +113,10 @@ class GurobiMObjectArray(ExtensionArray):
             other = other.mobj
         return GurobiMObjectArray(self.mobj * other)
 
+    def __rmul__(self, other):
+        assert not isinstance(other, GurobiMObjectArray)
+        return GurobiMObjectArray(other * self.mobj)
+
     def __imul__(self, other):
         if isinstance(other, GurobiMObjectArray):
             other = other.mobj
