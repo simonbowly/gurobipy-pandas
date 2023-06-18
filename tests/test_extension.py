@@ -97,3 +97,13 @@ class TestGurobiVarArrayCopy(GurobiModelTestCase):
         self.assertIsNot(arr.mvar, arr_copy.mvar)
         for i in range(20):
             self.assertTrue(arr[i].sameAs(arr_copy[i]))
+
+
+class TestGurobiMObjectArrayAdd(GurobiModelTestCase):
+    # Fairly minimal tests here. The Array just delegates to gurobi M* class
+    # operations, and more extensive testing is done in test_operators.
+    def test_var_plus_scalar(self):
+        vararr = GurobiVarArray(self.model.addMVar((5,)))
+        learr = vararr + 2.0
+        for i in range(5):
+            self.assert_linexpr_equal(learr[i], vararr[i] + 2.0)
