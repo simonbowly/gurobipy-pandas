@@ -71,10 +71,14 @@ class GurobiMObjectArray(ExtensionArray):
           to the values where ``item`` is True.
         """
         if isinstance(item, int):
+            # Scalar: return a python object
             if self.nan_mask[item]:
                 return None
             return self.mobj[item].item()
-        return GurobiMObjectArray(self.mobj[item])  # TODO does this need a copy?
+        else:
+            # Return slice/mask of both the expression and the mask
+            # TODO does the expression ever need to be copied?
+            return GurobiMObjectArray(self.mobj[item], self.nan_mask[item])
 
     def take(self, indices, allow_fill=False, fill_value=None):
         assert fill_value is None

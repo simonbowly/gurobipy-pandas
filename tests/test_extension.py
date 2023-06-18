@@ -63,8 +63,10 @@ class TestGurobiMObjectArrayDtypes(GurobiModelTestCase):
 class TestGurobiMObjectArrayGetItem(GurobiModelTestCase):
     def setUp(self):
         super().setUp()
-        mvar = self.model.addMVar((10,), name="x")
-        self.arr = create_gurobimobjectarray(mvar)
+        self.mvar = self.model.addMVar((10,), name="x")
+        self.arr = create_gurobimobjectarray(self.mvar)
+        nan_mask = np.array([True, False] * 5).astype(bool)
+        self.arr_nulls = GurobiMObjectArray(self.mvar, nan_mask)
         self.model.update()
 
     def test_scalar(self):
@@ -75,6 +77,16 @@ class TestGurobiMObjectArrayGetItem(GurobiModelTestCase):
             self.assertIsInstance(obj, gp.Var)
             self.assertEqual(obj.VarName, f"x[{i}]")
 
+    def test_scalar_nulls(self):
+        for i in range(10):
+            obj = self.arr_nulls[i]
+            if i % 2 == 0:
+                self.assertIsNone(obj)
+            else:
+                self.assertIsInstance(obj, gp.Var)
+                self.assertEqual(obj.VarName, f"x[{i}]")
+                self.assertTrue(obj.sameAs(self.mvar[i].item()))
+
     def test_slice_1(self):
         # For slice ``key``, return an instance of ``ExtensionArray``, even
         # if the slice is length 0 or 1.
@@ -83,6 +95,22 @@ class TestGurobiMObjectArrayGetItem(GurobiModelTestCase):
             self.assertIsInstance(obj, GurobiMObjectArray)
             self.assertEqual(len(obj), 1)
             self.assertEqual(obj[0].VarName, f"x[{i}]")
+
+    def test_slice_1_nulls(self):
+        # For slice ``key``, return an instance of ``ExtensionArray``, even
+        # if the slice is length 0 or 1.
+        for i in range(10):
+            part = self.arr_nulls[i : i + 1]
+            self.assertIsInstance(part, GurobiMObjectArray)
+            self.assertEqual(len(part), 1)
+
+            obj = part[0]
+            if i % 2 == 0:
+                self.assertIsNone(obj)
+            else:
+                self.assertIsInstance(obj, gp.Var)
+                self.assertEqual(obj.VarName, f"x[{i}]")
+                self.assertTrue(obj.sameAs(self.mvar[i].item()))
 
     def test_slice_2(self):
         # For slice ``key``, return an instance of ``ExtensionArray``, even
@@ -102,6 +130,19 @@ class TestGurobiMObjectArrayGetItem(GurobiModelTestCase):
         self.assertEqual(len(obj), 5)
         for i in range(5):
             self.assertEqual(obj[i].VarName, f"x[{2*i + 1}]")
+
+    def test_mask_nulls(self):
+        # For a boolean mask, return an instance of ``ExtensionArray``, filtered
+        # to the values where ``item`` is True.
+        mask = np.array([0, 1, 0, 1, 0, 1, 0, 1, 0, 1]).astype(bool)
+        obj = self.arr_nulls[mask]
+        self.assertIsInstance(obj, GurobiMObjectArray)
+        self.assertEqual(len(obj), 5)
+        for i in range(5):
+            if (2 * i + 1) % 2 == 0:
+                self.assertIsNone(obj[i])
+            else:
+                self.assertEqual(obj[i].VarName, f"x[{2*i + 1}]")
 
 
 class TestGurobiMObjectArrayTake(GurobiModelTestCase):
