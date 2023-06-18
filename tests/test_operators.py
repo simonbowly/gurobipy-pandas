@@ -34,7 +34,9 @@ class TestAdd(GurobiModelTestCase):
         result = self.op(y, x)
         self.assertIsInstance(result, pd.Series)
         for i in range(5):
-            self.assert_expression_equal(result[i], self.op(y, x[i]))
+            # Term order depends on whether scalar operations or the extension
+            # type are involved
+            self.assert_expression_equal_unordered(result[i], self.op(y, x[i]))
 
     def test_dataseries_var(self):
         x = self.model.addVar(name="x")
@@ -74,7 +76,9 @@ class TestAdd(GurobiModelTestCase):
         result = self.op(le, x)
         self.assertIsInstance(result, pd.Series)
         for i in range(5):
-            self.assert_expression_equal(result[i], self.op(2 * y + 1, x[i]))
+            # Term order depends on whether scalar operations or the extension
+            # type are involved
+            self.assert_expression_equal_unordered(result[i], self.op(2 * y + 1, x[i]))
 
     def test_varseries_quadexpr(self):
         x = gppd.add_vars(self.model, pd.RangeIndex(5), name="x")
