@@ -28,9 +28,20 @@ class GurobiLinExprDtype(ExtensionDtype):
         return GurobiMObjectArray
 
 
+@register_extension_dtype
+class GurobiQuadExprDtype(ExtensionDtype):
+    name = "gpquadexpr"
+    type = gp.QuadExpr  # scalar type returned from indexing
+    kind = "O"
+
+    @classmethod
+    def construct_array_type(cls):
+        return GurobiMObjectArray
+
+
 class GurobiMObjectArray(ExtensionArray):
     def __init__(self, mobj):
-        assert isinstance(mobj, (gp.MVar, gp.MLinExpr))
+        assert isinstance(mobj, (gp.MVar, gp.MLinExpr, gp.MQuadExpr))
         assert mobj.ndim == 1
         self.mobj = mobj
 
@@ -43,6 +54,8 @@ class GurobiMObjectArray(ExtensionArray):
             return GurobiVarDtype()
         elif isinstance(self.mobj, gp.MLinExpr):
             return GurobiLinExprDtype()
+        elif isinstance(self.mobj, gp.MQuadExpr):
+            return GurobiQuadExprDtype()
 
     def __getitem__(self, item):
         """
