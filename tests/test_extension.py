@@ -104,12 +104,41 @@ class TestGurobiMObjectArrayTake(GurobiModelTestCase):
         self.model.update()
 
     def test_1(self):
-        positions = [1, 3, 4, 7]
-        obj = self.arr.take(np.array(positions))
+        # Test normal positional indices
+        indices = [1, 3, 4, 7]
+        obj = self.arr.take(np.array(indices))
         self.assertIsInstance(obj, GurobiMObjectArray)
         self.assertEqual(len(obj), 4)
         for i in range(4):
-            self.assertEqual(obj[i].VarName, f"x[{positions[i]}]")
+            self.assertEqual(obj[i].VarName, f"x[{indices[i]}]")
+
+    def test_2(self):
+        # Test null fill
+        indices = [1, 4, -1, 3]
+        obj = self.arr.take(np.array(indices), allow_fill=True)
+        self.assertIsInstance(obj, GurobiMObjectArray)
+        self.assertEqual(len(obj), 4)
+
+        self.assertEqual(obj[0].VarName, "x[1]")
+        self.assertEqual(obj[1].VarName, "x[4]")
+        self.assertIsNone(obj[2])
+        self.assertEqual(obj[3].VarName, "x[3]")
+
+    def test_3(self):
+        # Test repeated null fill
+        tmp = self.arr.take(np.array([1, 6, -1, 3, -1, 4]), allow_fill=True)
+        obj = tmp.take(np.array([0, 1, 2, 1, -1, 4, -1, 0]), allow_fill=True)
+        self.assertIsInstance(obj, GurobiMObjectArray)
+        self.assertEqual(len(obj), 8)
+
+        self.assertTrue(obj[0].sameAs(self.arr[1]))
+        self.assertTrue(obj[1].sameAs(self.arr[6]))
+        self.assertIsNone(obj[2])
+        self.assertTrue(obj[3].sameAs(self.arr[6]))
+        self.assertIsNone(obj[4])
+        self.assertIsNone(obj[5])
+        self.assertIsNone(obj[6])
+        self.assertTrue(obj[7].sameAs(self.arr[1]))
 
 
 class TestGurobiMObjectArrayCopy(GurobiModelTestCase):
@@ -127,6 +156,9 @@ class TestGurobiMObjectArrayCopy(GurobiModelTestCase):
 # Only minimal tests for arithmetic operators here. The array type just
 # delegates to gurobi M* class operations, and more extensive testing is done on
 # the resulting Series in test_operators.
+
+# The exception is null handling ... checking that the mask is carried through
+# properly is a pain ...
 
 
 class TestGurobiMObjectArrayAdd(GurobiModelTestCase):
@@ -146,6 +178,33 @@ class TestGurobiMObjectArrayAdd(GurobiModelTestCase):
         for i in range(5):
             self.assert_linexpr_equal(learr[i], x[i] + y[i])
 
+    def test_nan_handling_1(self):
+        x = self.model.addMVar((3,))
+        nan_mask = np.array([False, True, False])
+        x_arr = GurobiMObjectArray(x, nan_mask)
+        res_arr = x_arr + 1.0
+
+        self.assert_linexpr_equal(res_arr[0], x[0].item() + 1.0)
+        self.assertIsNone(res_arr[1])
+        self.assert_linexpr_equal(res_arr[2], x[2].item() + 1.0)
+
+    def test_nan_handling_2(self):
+        x = self.model.addMVar((5,))
+        x_nan_mask = np.array([False, True, True, False, False])
+        x_arr = GurobiMObjectArray(x, x_nan_mask)
+
+        y = self.model.addMVar((5,))
+        y_nan_mask = np.array([False, False, True, False, True])
+        y_arr = GurobiMObjectArray(y, y_nan_mask)
+
+        res_arr = x_arr + y_arr + 2.0
+
+        self.assert_linexpr_equal(res_arr[0], x[0].item() + y[0].item() + 2.0)
+        self.assertIsNone(res_arr[1])
+        self.assertIsNone(res_arr[2])
+        self.assert_linexpr_equal(res_arr[3], x[3].item() + y[3].item() + 2.0)
+        self.assertIsNone(res_arr[4])
+
 
 class TestGurobiMObjectArrayRadd(GurobiModelTestCase):
     def test_var_plus_vararray(self):
@@ -157,6 +216,16 @@ class TestGurobiMObjectArrayRadd(GurobiModelTestCase):
         for i in range(5):
             # Term ordering is different as radd just delegates to add
             self.assert_linexpr_equal(learr[i], vararr[i] + x)
+
+    def test_nan_handling_1(self):
+        x = self.model.addMVar((3,))
+        nan_mask = np.array([False, True, False])
+        x_arr = GurobiMObjectArray(x, nan_mask)
+        res_arr = 1.0 + x_arr
+
+        self.assert_linexpr_equal(res_arr[0], x[0].item() + 1.0)
+        self.assertIsNone(res_arr[1])
+        self.assert_linexpr_equal(res_arr[2], x[2].item() + 1.0)
 
 
 class TestGurobiMObjectArrayIadd(GurobiModelTestCase):
@@ -183,6 +252,33 @@ class TestGurobiMObjectArrayIadd(GurobiModelTestCase):
         for i in range(5):
             self.assert_linexpr_equal(xarr[i], x[i].item() + y[i].item())
 
+    def test_nan_handling_1(self):
+        x = self.model.addMVar((3,))
+        nan_mask = np.array([False, True, False])
+        arr = GurobiMObjectArray(x, nan_mask)
+        arr += 1.0
+
+        self.assert_linexpr_equal(arr[0], x[0].item() + 1.0)
+        self.assertIsNone(arr[1])
+        self.assert_linexpr_equal(arr[2], x[2].item() + 1.0)
+
+    def test_nan_handling_2(self):
+        x = self.model.addMVar((5,))
+        x_nan_mask = np.array([False, True, True, False, False])
+        arr = GurobiMObjectArray(x, x_nan_mask)
+
+        y = self.model.addMVar((5,))
+        y_nan_mask = np.array([False, False, True, False, True])
+        y_arr = GurobiMObjectArray(y, y_nan_mask)
+
+        arr += y_arr + 2.0
+
+        self.assert_linexpr_equal(arr[0], x[0].item() + y[0].item() + 2.0)
+        self.assertIsNone(arr[1])
+        self.assertIsNone(arr[2])
+        self.assert_linexpr_equal(arr[3], x[3].item() + y[3].item() + 2.0)
+        self.assertIsNone(arr[4])
+
 
 class TestGurobiMObjectArraySub(GurobiModelTestCase):
     def test_vararray_minus_linexpr(self):
@@ -202,6 +298,33 @@ class TestGurobiMObjectArraySub(GurobiModelTestCase):
         for i in range(5):
             self.assert_linexpr_equal(learr[i], x[i] - y[i])
 
+    def test_nan_handling_1(self):
+        x = self.model.addMVar((3,))
+        nan_mask = np.array([False, True, False])
+        x_arr = GurobiMObjectArray(x, nan_mask)
+        res_arr = x_arr - 1.0
+
+        self.assert_linexpr_equal(res_arr[0], x[0].item() - 1.0)
+        self.assertIsNone(res_arr[1])
+        self.assert_linexpr_equal(res_arr[2], x[2].item() - 1.0)
+
+    def test_nan_handling_2(self):
+        x = self.model.addMVar((5,))
+        x_nan_mask = np.array([False, False, True, True, False])
+        x_arr = GurobiMObjectArray(x, x_nan_mask)
+
+        y = self.model.addMVar((5,))
+        y_nan_mask = np.array([True, False, True, False, True])
+        y_arr = GurobiMObjectArray(y, y_nan_mask)
+
+        res_arr = x_arr - (y_arr + 2.0)
+
+        self.assertIsNone(res_arr[0])
+        self.assert_linexpr_equal(res_arr[1], x[1].item() - y[1].item() - 2.0)
+        self.assertIsNone(res_arr[2])
+        self.assertIsNone(res_arr[3])
+        self.assertIsNone(res_arr[4])
+
 
 class TestGurobiMObjectArrayRsub(GurobiModelTestCase):
     def test_linexpr_minus_vararray(self):
@@ -213,6 +336,16 @@ class TestGurobiMObjectArrayRsub(GurobiModelTestCase):
         for i in range(5):
             # Term ordering is different as radd just delegates to add
             self.assert_linexpr_equal(learr[i], -vararr[i] + 2 * x + 4)
+
+    def test_nan_handling_1(self):
+        x = self.model.addMVar((3,))
+        nan_mask = np.array([False, False, True])
+        x_arr = GurobiMObjectArray(x, nan_mask)
+        res_arr = 1.0 - x_arr
+
+        self.assert_linexpr_equal(res_arr[0], 1.0 - x[0].item())
+        self.assert_linexpr_equal(res_arr[1], 1.0 - x[1].item())
+        self.assertIsNone(res_arr[2])
 
 
 class TestGurobiMObjectArrayIsub(GurobiModelTestCase):
@@ -238,6 +371,33 @@ class TestGurobiMObjectArrayIsub(GurobiModelTestCase):
         self.assertIsInstance(xarr.dtype, GurobiLinExprDtype)
         for i in range(5):
             self.assert_linexpr_equal(xarr[i], x[i].item() - y[i].item())
+
+    def test_nan_handling_1(self):
+        x = self.model.addMVar((3,))
+        nan_mask = np.array([True, True, False])
+        arr = GurobiMObjectArray(x, nan_mask)
+        arr -= 1.0
+
+        self.assertIsNone(arr[0])
+        self.assertIsNone(arr[1])
+        self.assert_linexpr_equal(arr[2], x[2].item() - 1.0)
+
+    def test_nan_handling_2(self):
+        x = self.model.addMVar((5,))
+        x_nan_mask = np.array([True, False, True, False, False])
+        arr = GurobiMObjectArray(x, x_nan_mask)
+
+        y = self.model.addMVar((5,))
+        y_nan_mask = np.array([False, False, True, False, True])
+        y_arr = GurobiMObjectArray(y, y_nan_mask)
+
+        arr -= y_arr + 2.0
+
+        self.assertIsNone(arr[0])
+        self.assert_linexpr_equal(arr[1], x[1].item() - y[1].item() - 2.0)
+        self.assertIsNone(arr[2])
+        self.assert_linexpr_equal(arr[3], x[3].item() - y[3].item() - 2.0)
+        self.assertIsNone(arr[4])
 
 
 class TestGurobiMObjectArrayMul(GurobiModelTestCase):
@@ -268,6 +428,38 @@ class TestGurobiMObjectArrayMul(GurobiModelTestCase):
         for i in range(5):
             self.assert_quadexpr_equal(qearr[i], x[i] * y[i])
 
+    def test_nan_handling_1(self):
+        x = self.model.addMVar((3,))
+        y = self.model.addVar()
+        nan_mask = np.array([False, True, False])
+        x_arr = GurobiMObjectArray(x, nan_mask)
+        res_arr = x_arr * (y + 1)
+
+        self.assert_quadexpr_equal(res_arr[0], x[0].item() * y + x[0].item())
+        self.assertIsNone(res_arr[1])
+        self.assert_quadexpr_equal(res_arr[2], x[2].item() * y + x[2].item())
+
+    def test_nan_handling_2(self):
+        x = self.model.addMVar((5,))
+        x_nan_mask = np.array([False, False, True, False, False])
+        x_arr = GurobiMObjectArray(x, x_nan_mask)
+
+        y = self.model.addMVar((5,))
+        y_nan_mask = np.array([False, True, True, False, True])
+        y_arr = GurobiMObjectArray(y, y_nan_mask)
+
+        res_arr = x_arr * (2.0 * y_arr + 3.0)
+
+        self.assert_quadexpr_equal(
+            res_arr[0], 2.0 * x[0].item() * y[0].item() + 3.0 * x[0].item()
+        )
+        self.assertIsNone(res_arr[1])
+        self.assertIsNone(res_arr[2])
+        self.assert_quadexpr_equal(
+            res_arr[3], 2.0 * x[3].item() * y[3].item() + 3.0 * x[3].item()
+        )
+        self.assertIsNone(res_arr[4])
+
 
 class TestGurobiMObjectArrayRmul(GurobiModelTestCase):
     def test_vararray_times_scalar(self):
@@ -286,6 +478,17 @@ class TestGurobiMObjectArrayRmul(GurobiModelTestCase):
         self.assertIsInstance(learr.dtype, GurobiLinExprDtype)
         for i in range(5):
             self.assert_linexpr_equal(learr[i], vararr[i] * (i + 1))
+
+    def test_nan_handling_1(self):
+        x = self.model.addMVar((3,))
+        y = self.model.addVar()
+        nan_mask = np.array([False, True, False])
+        x_arr = GurobiMObjectArray(x, nan_mask)
+        res_arr = (2.0 * y) * x_arr
+
+        self.assert_quadexpr_equal(res_arr[0], 2.0 * x[0].item() * y)
+        self.assertIsNone(res_arr[1])
+        self.assert_quadexpr_equal(res_arr[2], 2.0 * x[2].item() * y)
 
 
 class TestGurobiMObjectArrayImul(GurobiModelTestCase):
@@ -312,6 +515,38 @@ class TestGurobiMObjectArrayImul(GurobiModelTestCase):
         for i in range(5):
             self.assert_linexpr_equal(arr[i], x[i].item() * (i + 1))
 
+    def test_nan_handling_1(self):
+        x = self.model.addMVar((3,))
+        y = self.model.addVar()
+        nan_mask = np.array([False, True, False])
+        arr = GurobiMObjectArray(x, nan_mask)
+        arr *= y + 1
+
+        self.assert_quadexpr_equal(arr[0], x[0].item() * y + x[0].item())
+        self.assertIsNone(arr[1])
+        self.assert_quadexpr_equal(arr[2], x[2].item() * y + x[2].item())
+
+    def test_nan_handling_2(self):
+        x = self.model.addMVar((5,))
+        x_nan_mask = np.array([False, False, True, False, False])
+        arr = GurobiMObjectArray(x, x_nan_mask)
+
+        y = self.model.addMVar((5,))
+        y_nan_mask = np.array([False, True, True, False, True])
+        y_arr = GurobiMObjectArray(y, y_nan_mask)
+
+        arr *= 2.0 * y_arr + 3.0
+
+        self.assert_quadexpr_equal(
+            arr[0], 2.0 * x[0].item() * y[0].item() + 3.0 * x[0].item()
+        )
+        self.assertIsNone(arr[1])
+        self.assertIsNone(arr[2])
+        self.assert_quadexpr_equal(
+            arr[3], 2.0 * x[3].item() * y[3].item() + 3.0 * x[3].item()
+        )
+        self.assertIsNone(arr[4])
+
 
 class TestGurobiMObjectArrayPow(GurobiModelTestCase):
     def test_power_2(self):
@@ -320,3 +555,14 @@ class TestGurobiMObjectArrayPow(GurobiModelTestCase):
         self.assertIsInstance(arr.dtype, GurobiQuadExprDtype)
         for i in range(7):
             self.assert_quadexpr_equal(x[i] ** 2, arr[i])
+
+    def test_nan_handling_1(self):
+        x = self.model.addMVar((5,))
+        nan_mask = np.array([False, False, True, True, False])
+        x_arr = GurobiMObjectArray(x, nan_mask)
+        res_arr = x_arr**2
+
+        for i in [0, 1, 4]:
+            self.assert_quadexpr_equal(res_arr[i], x[i].item() ** 2)
+        for i in [2, 3]:
+            self.assertIsNone(res_arr[i])
