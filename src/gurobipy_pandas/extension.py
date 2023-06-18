@@ -1,4 +1,5 @@
 import gurobipy as gp
+import numpy as np
 from pandas.api.extensions import (
     ExtensionArray,
     ExtensionDtype,
@@ -40,10 +41,15 @@ class GurobiQuadExprDtype(ExtensionDtype):
 
 
 class GurobiMObjectArray(ExtensionArray):
-    def __init__(self, mobj):
+    def __init__(self, mobj, nan_mask=None):
         assert isinstance(mobj, (gp.MVar, gp.MLinExpr, gp.MQuadExpr))
         assert mobj.ndim == 1
         self.mobj = mobj
+        if nan_mask is None:
+            self.nan_mask = np.zeros(mobj.shape, dtype=bool)
+        else:
+            assert nan_mask.shape == mobj.shape
+            self.nan_mask = nan_mask
 
     def __len__(self):
         return self.mobj.size
@@ -69,63 +75,80 @@ class GurobiMObjectArray(ExtensionArray):
           to the values where ``item`` is True.
         """
         if isinstance(item, int):
+            if self.nan_mask[item]:
+                return None
             return self.mobj[item].item()
         return GurobiMObjectArray(self.mobj[item])  # TODO does this need a copy?
 
     def take(self, indices, allow_fill=False, fill_value=None):
-        return GurobiMObjectArray(self.mobj[indices])  # TODO does this need a copy?
+        assert fill_value is None
+        if allow_fill:
+            nan_mask = self.nan_mask[indices] | (indices == -1)
+        else:
+            nan_mask = self.nan_mask[indices]
+        mobj = self.mobj[indices]  # TODO does this need a copy?
+        return GurobiMObjectArray(mobj, nan_mask)
 
     def copy(self):
         return GurobiMObjectArray(self.mobj.copy())
 
-    def __add__(self, other):
+    def _prepare_operands(self, other, mul=False):
+        # Return an operand which can work with self.mobj, and the correct
+        # nan mask for the result.
         if isinstance(other, GurobiMObjectArray):
+            nan_mask = self.nan_mask | other.nan_mask
             other = other.mobj
-        return GurobiMObjectArray(self.mobj + other)
+        else:
+            if mul and isinstance(other, gp.LinExpr):
+                # Workaround a missing operator implementation in gurobipy <=
+                # 10.0.2. Convert LinExpr to 0d MLinExpr before passing to
+                # multiply operations.
+                other = gp.MLinExpr.zeros(tuple()) + other
+            nan_mask = self.nan_mask
+        return other, nan_mask
+
+    def __add__(self, other):
+        other, nan_mask = self._prepare_operands(other)
+        return GurobiMObjectArray(self.mobj + other, nan_mask)
 
     def __radd__(self, other):
-        assert not isinstance(other, GurobiMObjectArray)
-        return GurobiMObjectArray(other + self.mobj)
+        other, nan_mask = self._prepare_operands(other)
+        return GurobiMObjectArray(other + self.mobj, nan_mask)
 
     def __iadd__(self, other):
-        if isinstance(other, GurobiMObjectArray):
-            other = other.mobj
+        other, nan_mask = self._prepare_operands(other)
         self.mobj += other
+        self.nan_mask = nan_mask
         return self
 
     def __sub__(self, other):
-        if isinstance(other, GurobiMObjectArray):
-            other = other.mobj
-        return GurobiMObjectArray(self.mobj - other)
+        other, nan_mask = self._prepare_operands(other)
+        return GurobiMObjectArray(self.mobj - other, nan_mask)
 
     def __rsub__(self, other):
-        assert not isinstance(other, GurobiMObjectArray)
-        return GurobiMObjectArray(other - self.mobj)
+        other, nan_mask = self._prepare_operands(other)
+        return GurobiMObjectArray(other - self.mobj, nan_mask)
 
     def __isub__(self, other):
-        if isinstance(other, GurobiMObjectArray):
-            other = other.mobj
+        other, nan_mask = self._prepare_operands(other)
         self.mobj -= other
+        self.nan_mask = nan_mask
         return self
 
     def __mul__(self, other):
-        if isinstance(other, GurobiMObjectArray):
-            other = other.mobj
-        # Workaround a missing operator implementation in gurobipy <= 10.0.2
-        if isinstance(self.mobj, (gp.MVar, gp.MLinExpr)) and isinstance(
-            other, gp.LinExpr
-        ):
-            other = gp.MLinExpr.zeros(tuple()) + other
-        return GurobiMObjectArray(self.mobj * other)
+        other, nan_mask = self._prepare_operands(other, mul=True)
+        return GurobiMObjectArray(self.mobj * other, nan_mask)
 
     def __rmul__(self, other):
-        return self * other
+        other, nan_mask = self._prepare_operands(other, mul=True)
+        return GurobiMObjectArray(self.mobj * other, nan_mask)
 
     def __imul__(self, other):
-        if isinstance(other, GurobiMObjectArray):
-            other = other.mobj
+        other, nan_mask = self._prepare_operands(other, mul=True)
         self.mobj *= other
+        self.nan_mask = nan_mask
         return self
 
     def __pow__(self, power):
-        return GurobiMObjectArray(self.mobj**power)
+        power, nan_mask = self._prepare_operands(power)
+        return GurobiMObjectArray(self.mobj**power, nan_mask)
