@@ -17,6 +17,17 @@ class GurobiVarDtype(ExtensionDtype):
         return GurobiMObjectArray
 
 
+@register_extension_dtype
+class GurobiLinExprDtype(ExtensionDtype):
+    name = "gplinexpr"
+    type = gp.LinExpr  # scalar type returned from indexing
+    kind = "O"
+
+    @classmethod
+    def construct_array_type(cls):
+        return GurobiMObjectArray
+
+
 class GurobiMObjectArray(ExtensionArray):
     def __init__(self, mobj):
         assert isinstance(mobj, (gp.MVar, gp.MLinExpr))
@@ -28,7 +39,10 @@ class GurobiMObjectArray(ExtensionArray):
 
     @property
     def dtype(self) -> ExtensionDtype:
-        return GurobiVarDtype()
+        if isinstance(self.mobj, gp.MVar):
+            return GurobiVarDtype()
+        elif isinstance(self.mobj, gp.MLinExpr):
+            return GurobiLinExprDtype()
 
     def __getitem__(self, item):
         """

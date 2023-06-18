@@ -4,7 +4,11 @@ import gurobipy as gp
 import numpy as np
 from pandas.api.types import is_extension_array_dtype, pandas_dtype
 
-from gurobipy_pandas.extension import GurobiMObjectArray, GurobiVarDtype
+from gurobipy_pandas.extension import (
+    GurobiLinExprDtype,
+    GurobiMObjectArray,
+    GurobiVarDtype,
+)
 
 from .utils import GurobiModelTestCase
 
@@ -12,6 +16,10 @@ from .utils import GurobiModelTestCase
 class TestRegisteredGurobiDtypes(unittest.TestCase):
     def test_gpvar(self):
         dtype = pandas_dtype("gpvar")
+        self.assertTrue(is_extension_array_dtype(dtype))
+
+    def test_gplinexpr(self):
+        dtype = pandas_dtype("gplinexpr")
         self.assertTrue(is_extension_array_dtype(dtype))
 
 
@@ -105,6 +113,8 @@ class TestGurobiMObjectArrayAdd(GurobiModelTestCase):
     # operations, and more extensive testing is done in test_operators.
     def test_var_plus_scalar(self):
         vararr = GurobiMObjectArray(self.model.addMVar((5,)))
+        self.assertIsInstance(vararr.dtype, GurobiVarDtype)
         learr = vararr + 2.0
+        self.assertIsInstance(learr.dtype, GurobiLinExprDtype)
         for i in range(5):
             self.assert_linexpr_equal(learr[i], vararr[i] + 2.0)
