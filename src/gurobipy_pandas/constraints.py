@@ -9,7 +9,9 @@ from typing import Optional, Union
 import gurobipy as gp
 import pandas as pd
 from gurobipy import GRB
+from pandas.api.types import is_numeric_dtype
 
+from gurobipy_pandas.extension import GurobiLinExprDtype
 from gurobipy_pandas.util import create_names, gppd_global_options
 
 CONSTRAINT_SENSES = frozenset([GRB.LESS_EQUAL, GRB.EQUAL, GRB.GREATER_EQUAL])
@@ -155,8 +157,12 @@ def _add_constrs_from_dataframe_args(
     references or single values. Return constraints as an aligned series.
     """
 
+    # if we have no dtype object columns involved, we can do a fast path
+    # using the matrix API
+
     if isinstance(lhs, str):
         assert lhs in data.columns
+
     else:
         lhs = float(lhs)
 
@@ -169,6 +175,16 @@ def _add_constrs_from_dataframe_args(
         names = create_names(name, data.index, index_formatter)
     else:
         names = [""] * len(data.index)
+
+    # Fast path for a linear matrix
+    if (
+        isinstance(lhs, str)
+        and data[lhs].dtype == GurobiLinExprDtype()
+        and isinstance(rhs, str)
+        and is_numeric_dtype(data[rhs])
+    ):
+        c = model.addConstr(data[lhs].values.mobj == data[rhs].values, name=names)
+        return pd.Series(index=data.index, data=c.tolist(), name=name)
 
     # Mappers from itertuple 'Pandas' objects to lhs/rhs values.
     # Index into them numerically.
