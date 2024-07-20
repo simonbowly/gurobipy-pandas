@@ -58,6 +58,8 @@ Documentation
    :caption: How To ...
 
    Avoid Performance Pitfalls <performance>
+   Inspect a Model <inspect>
+   Modify a Model <modify>
    Add Specialized Constraints <advanced>
 
 .. toctree::
