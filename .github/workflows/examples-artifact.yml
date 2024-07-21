@@ -27,10 +27,11 @@ jobs:
           python -m pip install --upgrade pip
       - name: Install dependencies
         run: |
-          python -m pip install jupytext
+          python -m pip install jupyter-client~=8.6 jupytext~=1.16
       - name: Convert notebooks
         run: |
-          python -m jupytext --set-kernel python3 --to ipynb docs/source/examples/*.md
+          python -m jupytext --opt notebook_metadata_filter=-kernelspec \
+            --to ipynb docs/source/examples/*.md
       - name: Archive notebook and data artifact
         uses: actions/upload-artifact@v4
         with:
