@@ -6,6 +6,38 @@
     "webhook_notifications": {},
     "timeout_seconds": 0,
     "max_concurrent_runs": 1,
+    "job_clusters": [
+        {
+            "job_cluster_key": "tiny-cluster",
+            "new_cluster": {
+                "spark_version": "15.4.x-scala2.12",
+                "spark_conf": {
+                    "spark.master": "local[*, 4]",
+                    "spark.databricks.cluster.profile": "singleNode"
+                },
+                "azure_attributes": {
+                    "first_on_demand": 1,
+                    "availability": "ON_DEMAND_AZURE",
+                    "spot_bid_max_price": -1
+                },
+                "node_type_id": "Standard_D4ds_v5",
+                "driver_node_type_id": "Standard_D4ds_v5",
+                "custom_tags": {
+                    "ResourceClass": "SingleNode"
+                },
+                "spark_env_vars": {
+                    "PYSPARK_PYTHON": "/databricks/python3/bin/python3"
+                },
+                "enable_elastic_disk": true,
+                "enable_local_disk_encryption": false,
+                "data_security_mode": "SINGLE_USER",
+                "runtime_engine": "PHOTON",
+                "effective_spark_version": "15.4.x-photon-scala2.12",
+                "num_workers": 0,
+                "apply_policy_default_values": false
+            }
+        }
+    ],
     "tasks": [
         {
             "task_key": "1a-feasible-assignments",
@@ -14,7 +46,7 @@
                 "notebook_path": "/Workspace/Shared/gurobipy-pandas/webinar/2409-gppd-etl/1a-feasible-assignments",
                 "source": "WORKSPACE"
             },
-            "existing_cluster_id": "## id of existing cluster ##",
+            "job_cluster_key": "tiny-cluster",
             "libraries": [
                 {
                     "requirements": "/Workspace/Shared/gurobipy-pandas/webinar/2409-gppd-etl/requirements.txt"
@@ -36,7 +68,7 @@
                 "notebook_path": "/Workspace/Shared/gurobipy-pandas/webinar/2409-gppd-etl/1b-staff-required",
                 "source": "WORKSPACE"
             },
-            "existing_cluster_id": "## id of existing cluster ##",
+            "job_cluster_key": "tiny-cluster",
             "libraries": [
                 {
                     "requirements": "/Workspace/Shared/gurobipy-pandas/webinar/2409-gppd-etl/requirements.txt"
@@ -58,7 +90,7 @@
                 "notebook_path": "/Workspace/Shared/gurobipy-pandas/webinar/2409-gppd-etl/1c-shift-conflicts",
                 "source": "WORKSPACE"
             },
-            "existing_cluster_id": "## id of existing cluster ##",
+            "job_cluster_key": "tiny-cluster",
             "libraries": [
                 {
                     "requirements": "/Workspace/Shared/gurobipy-pandas/webinar/2409-gppd-etl/requirements.txt"
@@ -91,7 +123,7 @@
                 "notebook_path": "/Workspace/Shared/gurobipy-pandas/webinar/2409-gppd-etl/2-optimize",
                 "source": "WORKSPACE"
             },
-            "existing_cluster_id": "## id of existing cluster ##",
+            "job_cluster_key": "tiny-cluster",
             "libraries": [
                 {
                     "requirements": "/Workspace/Shared/gurobipy-pandas/webinar/2409-gppd-etl/requirements-gurobi.txt"
@@ -118,7 +150,7 @@
                 "notebook_path": "/Workspace/Shared/gurobipy-pandas/webinar/2409-gppd-etl/3-postprocess",
                 "source": "WORKSPACE"
             },
-            "existing_cluster_id": "## id of existing cluster ##",
+            "job_cluster_key": "tiny-cluster",
             "libraries": [
                 {
                     "requirements": "/Workspace/Shared/gurobipy-pandas/webinar/2409-gppd-etl/requirements.txt"
