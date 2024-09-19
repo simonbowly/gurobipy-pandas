@@ -10,5 +10,5 @@ databricks repos create \
 Set up job:
 
 ```
-databricks clusters create --json @cluster.json
+databricks jobs create --json @workflow.json
 ```
