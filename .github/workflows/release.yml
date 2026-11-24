@@ -8,6 +8,8 @@ on:
   push:
     tags:
       - v*
+  # Manual runs are a dry run: everything except publishing
+  workflow_dispatch:
 
 jobs:
   code-quality:
@@ -66,6 +68,8 @@ jobs:
           license: ${{ secrets.GUROBI_LICENSE }}
 
   publish-pypi:
+    # Only publish when running on a tag (manual runs on a branch are dry runs)
+    if: github.ref_type == 'tag'
     uses: ./.github/workflows/publish-pypi.yml
     needs: [test-wheel, test-wheel-licensed]
     secrets: inherit
