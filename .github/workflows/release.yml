@@ -43,16 +43,16 @@ jobs:
           python: ${{ matrix.python }}
           gurobipy: ${{ matrix.gurobipy }}
 
-  # Gurobi 12 needs a license
+  # Backward-compatibility tests for old Gurobi versions (expired pip license)
   test-wheel-licensed:
     needs: [code-quality, build-wheel]
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
-        python: ["3.11", "3.12", "3.13"]
-        gurobipy: ["~=12.0"]
+        os: [ubuntu-latest]
+        python: ["3.12"]
+        gurobipy: ["~=11.0", "~=12.0"]
     steps:
       - name: Checkout tests
         uses: actions/checkout@v7
